@@ -27,7 +27,7 @@ METADATA_KEYS = {'ob' : [MetadataName.EXPOSURE_TIME,
                          MetadataName.APERTURE_HL,
                          MetadataName.APERTURE_VT,
                          MetadataName.APERTURE_VB],
-                 'df' : [MetadataName.EXPOSURE_TIME,
+                 'dc' : [MetadataName.EXPOSURE_TIME,
                          MetadataName.DETECTOR_MANUFACTURER],
                  'all': [MetadataName.EXPOSURE_TIME,
                          MetadataName.DETECTOR_MANUFACTURER,
@@ -39,23 +39,55 @@ METADATA_KEYS = {'ob' : [MetadataName.EXPOSURE_TIME,
 
 class Main:
 
-    def __init__(self, sample_metadata_dict=None):
-        self.sample_metadata_dict = sample_metadata_dict
+    def __init__(self, list_sample_data=None, IPTS_folder=None):
+        self.list_sample_data = list_sample_data
+        self.IPTS_folder = IPTS_folder
+
+    def run(self):
+        self.retrieve_sample_metadata()
+        self.retrieve_ob_metadata()
+        self.retrieve_dc_metadata()
+        self.create_master_sample_dict()
+        self.match_ob()
+        self.match_dc()
+
+    def get_matching_ob(self):
+        return self.get_matching_data_file(data_type='ob')
+
+    def get_matching_dc(self):
+        return self.get_matching_data_file(data_type='dc')
+
+    def retrieve_sample_metadata(self):
+        self.sample_metadata_dict = MetadataHandler.retrieve_metadata(list_of_files=self.list_sample_data,
+                                                                      display_infos=False,
+                                                                      label='sample')
+
+    def retrieve_ob_metadata(self):
+        self.ob_metadata_dict = Main.auto_retrieve_metadata(self.IPTS_folder,
+                                                            data_type='ob')
+
+    def retrieve_dc_metadata(self):
+        self.dc_metadata_dict = Main.auto_retrieve_metadata(self.IPTS_folder,
+                                                            data_type=['df', 'dc'])
 
     def auto_retrieve_metadata(working_dir, data_type='ob'):
-        folder = os.path.join(working_dir, data_type)
+        if type(data_type) is list:
+            folder = [os.path.join(working_dir, _data_type) for _data_type in data_type]
+        else:
+            folder = os.path.join(working_dir, data_type)
         list_of_ob_files = get_list_of_all_files_in_subfolders(folder=folder,
                                                                extensions=['tiff', 'tif'])
         metadata_dict = MetadataHandler.retrieve_metadata(list_of_files=list_of_ob_files,
-                                                             label=data_type)
+                                                          label=data_type)
         return metadata_dict
 
-    def match_ob(self, list_ob_dict):
+    def match_ob(self):
         """we will go through all the ob and associate them with the right sample based on
         - acquisition time
         - detector type
         - aperture
         """
+        list_ob_dict = self.ob_metadata_dict
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
@@ -72,30 +104,32 @@ class Main:
 
         self.final_full_master_dict = final_full_master_dict
 
-    def match_df(self, list_df_dict):
+    def match_dc(self):
         """
-        we will go through all the df of the IPTS and will associate the df with the right samples
+        we will go through all the dc of the IPTS and will associate the dc with the right samples
         based on:
         - detector type used
         - acquisition time
         """
+        list_dc_dict = self.dc_metadata_dict
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
-        for _index_df in list_df_dict.keys():
-            _all_df_instrument_metadata = Main.get_instrument_metadata_only(list_df_dict[_index_df])
-            _df_instrument_metadata = Main.isolate_instrument_metadata(
-                    _all_df_instrument_metadata)
-            _acquisition_time = _all_df_instrument_metadata[MetadataName.EXPOSURE_TIME.value]['value']
+        for _index_dc in list_dc_dict.keys():
+            _all_dc_instrument_metadata = Main.get_instrument_metadata_only(list_dc_dict[_index_dc])
+            _dc_instrument_metadata = Main.isolate_instrument_metadata(
+                    _all_dc_instrument_metadata)
+            _acquisition_time = _all_dc_instrument_metadata[MetadataName.EXPOSURE_TIME.value]['value']
 
             if _acquisition_time in list_of_sample_acquisition:
                 for _config_id in final_full_master_dict[_acquisition_time].keys():
                     _sample_metadata_infos = final_full_master_dict[_acquisition_time][_config_id]['metadata_infos']
 
-                    if Main.all_metadata_match(_sample_metadata_infos, _df_instrument_metadata,
-                                                    list_key_to_check=[METADATA_KEYS['df'][
+                    if Main.all_metadata_match(_sample_metadata_infos, _dc_instrument_metadata,
+                                                    list_key_to_check=[METADATA_KEYS['dc'][
                                                                            1].value]):
-                        final_full_master_dict[_acquisition_time][_config_id]['list_df'].append(list_df_dict[_index_df])
+                        final_full_master_dict[_acquisition_time][_config_id]['list_dc'].append(list_dc_dict[
+                                                                                                    _index_dc])
 
         self.final_full_master_dict = final_full_master_dict
 
@@ -158,15 +192,15 @@ class Main:
             if (len(final_full_master_dict) == 0) or not (_acquisition_time in final_full_master_dict.keys()):
                 _first_images_dict = {'sample': first_sample_image,
                                       'ob'    : {},
-                                      'df'    : {}}
+                                      'dc'    : {}}
                 _last_images_dict = {'sample': last_sample_image,
                                      'ob'    : {},
-                                     'df'    : {}}
+                                     'dc'    : {}}
                 _temp_dict = {'list_sample'          : [_dict_file_index],
                               'first_images'         : _first_images_dict,
                               'last_images'          : _last_images_dict,
                               'list_ob'              : [],
-                              'list_df'              : [],
+                              'list_dc'              : [],
                               'time_range_s_selected': {'before': np.NaN,
                                                         'after' : np.NaN},
                               'time_range_s'         : {'before': np.NaN,
@@ -189,10 +223,10 @@ class Main:
 
                             _first_images_dict = {'sample': first_sample_image,
                                                   'ob'    : {},
-                                                  'df'    : {}}
+                                                  'dc'    : {}}
                             _last_images_dict = {'sample': last_sample_image,
                                                  'ob'    : {},
-                                                 'df'    : {}}
+                                                 'dc'    : {}}
 
                             _config['first_images'] = _first_images_dict
                             _config['last_images'] = _last_images_dict
@@ -201,16 +235,16 @@ class Main:
                     if not _found_a_match:
                         _first_images_dict = {'sample': first_sample_image,
                                               'ob'    : {},
-                                              'df'    : {}}
+                                              'dc'    : {}}
                         _last_images_dict = {'sample': last_sample_image,
                                              'ob'    : {},
-                                             'df'    : {}}
+                                             'dc'    : {}}
 
                         _temp_dict = {'list_sample'          : [_dict_file_index],
                                       'first_images'         : _first_images_dict,
                                       'last_images'          : _last_images_dict,
                                       'list_ob'              : [],
-                                      'list_df'              : [],
+                                      'list_dc'              : [],
                                       'time_range_s_selected': {'before': np.NaN,
                                                                 'after' : np.NaN},
                                       'time_range_s'         : {'before': np.NaN,
@@ -223,16 +257,16 @@ class Main:
                 else:
                     _first_images_dict = {'sample': first_sample_image,
                                           'ob'    : {},
-                                          'df'    : {}}
+                                          'dc'    : {}}
                     _last_images_dict = {'sample': last_sample_image,
                                          'ob'    : {},
-                                         'df'    : {}}
+                                         'dc'    : {}}
 
                     _temp_dict = {'list_sample'          : [_dict_file_index],
                                   'first_images'         : _first_images_dict,
                                   'last_images'          : _last_images_dict,
                                   'list_ob'              : [],
-                                  'list_df'              : [],
+                                  'list_dc'              : [],
                                   'time_range_s_selected': {'before': np.NAN,
                                                             'after' : np.NaN},
                                   'time_range_s'         : {'before': np.NaN,
