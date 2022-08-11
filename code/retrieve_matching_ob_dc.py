@@ -37,7 +37,7 @@ METADATA_KEYS = {'ob' : [MetadataName.EXPOSURE_TIME,
                          MetadataName.APERTURE_VB]}
 
 
-class Main:
+class RetrieveMatchingOBDC:
 
     def __init__(self, list_sample_data=None, IPTS_folder=None):
         self.list_sample_data = list_sample_data
@@ -63,12 +63,12 @@ class Main:
                                                                       label='sample')
 
     def retrieve_ob_metadata(self):
-        self.ob_metadata_dict = Main.auto_retrieve_metadata(self.IPTS_folder,
-                                                            data_type='ob')
+        self.ob_metadata_dict = RetrieveMatchingOBDC.auto_retrieve_metadata(self.IPTS_folder,
+                                                                            data_type='ob')
 
     def retrieve_dc_metadata(self):
-        self.dc_metadata_dict = Main.auto_retrieve_metadata(self.IPTS_folder,
-                                                            data_type=['df', 'dc'])
+        self.dc_metadata_dict = RetrieveMatchingOBDC.auto_retrieve_metadata(self.IPTS_folder,
+                                                                            data_type=['df', 'dc'])
 
     def auto_retrieve_metadata(working_dir, data_type='ob'):
         if type(data_type) is list:
@@ -92,14 +92,14 @@ class Main:
         list_of_sample_acquisition = final_full_master_dict.keys()
 
         for _index_ob in list_ob_dict.keys():
-            _all_ob_instrument_metadata = Main.get_instrument_metadata_only(list_ob_dict[_index_ob])
-            _ob_instrument_metadata = Main.isolate_instrument_metadata(
+            _all_ob_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_ob_dict[_index_ob])
+            _ob_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
                     _all_ob_instrument_metadata)
             _acquisition_time = _all_ob_instrument_metadata[MetadataName.EXPOSURE_TIME.value]['value']
             if _acquisition_time in list_of_sample_acquisition:
                 for _config_id in final_full_master_dict[_acquisition_time].keys():
                     _sample_metadata_infos = final_full_master_dict[_acquisition_time][_config_id]['metadata_infos']
-                    if Main.all_metadata_match(_sample_metadata_infos, _ob_instrument_metadata):
+                    if RetrieveMatchingOBDC.all_metadata_match(_sample_metadata_infos, _ob_instrument_metadata):
                         final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(list_ob_dict[_index_ob])
 
         self.final_full_master_dict = final_full_master_dict
@@ -116,8 +116,8 @@ class Main:
         list_of_sample_acquisition = final_full_master_dict.keys()
 
         for _index_dc in list_dc_dict.keys():
-            _all_dc_instrument_metadata = Main.get_instrument_metadata_only(list_dc_dict[_index_dc])
-            _dc_instrument_metadata = Main.isolate_instrument_metadata(
+            _all_dc_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_dc_dict[_index_dc])
+            _dc_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
                     _all_dc_instrument_metadata)
             _acquisition_time = _all_dc_instrument_metadata[MetadataName.EXPOSURE_TIME.value]['value']
 
@@ -125,8 +125,8 @@ class Main:
                 for _config_id in final_full_master_dict[_acquisition_time].keys():
                     _sample_metadata_infos = final_full_master_dict[_acquisition_time][_config_id]['metadata_infos']
 
-                    if Main.all_metadata_match(_sample_metadata_infos, _dc_instrument_metadata,
-                                                    list_key_to_check=[METADATA_KEYS['dc'][
+                    if RetrieveMatchingOBDC.all_metadata_match(_sample_metadata_infos, _dc_instrument_metadata,
+                                                               list_key_to_check=[METADATA_KEYS['dc'][
                                                                            1].value]):
                         final_full_master_dict[_acquisition_time][_config_id]['list_dc'].append(list_dc_dict[
                                                                                                     _index_dc])
@@ -179,7 +179,7 @@ class Main:
             _sample_file = _dict_file_index['filename']
 
             _acquisition_time = _dict_file_index[MetadataName.EXPOSURE_TIME.value]['value']
-            _instrument_metadata = Main.isolate_instrument_metadata(_dict_file_index)
+            _instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(_dict_file_index)
             _sample_time_stamp = _dict_file_index['time_stamp']
 
             # find which image was first and which image was last
@@ -205,7 +205,7 @@ class Main:
                                                         'after' : np.NaN},
                               'time_range_s'         : {'before': np.NaN,
                                                         'after' : np.NaN},
-                              'metadata_infos'       : Main.get_instrument_metadata_only(
+                              'metadata_infos'       : RetrieveMatchingOBDC.get_instrument_metadata_only(
                                       _instrument_metadata)}
                 final_full_master_dict[_acquisition_time] = {}
                 final_full_master_dict[_acquisition_time]['config0'] = _temp_dict
@@ -217,8 +217,8 @@ class Main:
                     _found_a_match = False
                     for _config_key in _dict_for_this_acquisition_time.keys():
                         _config = _dict_for_this_acquisition_time[_config_key]
-                        if (Main.all_metadata_match(metadata_1=_config['metadata_infos'],
-                                                         metadata_2=_instrument_metadata)):
+                        if (RetrieveMatchingOBDC.all_metadata_match(metadata_1=_config['metadata_infos'],
+                                                                    metadata_2=_instrument_metadata)):
                             _config['list_sample'].append(_dict_file_index)
 
                             _first_images_dict = {'sample': first_sample_image,
@@ -249,7 +249,7 @@ class Main:
                                                                 'after' : np.NaN},
                                       'time_range_s'         : {'before': np.NaN,
                                                                 'after' : np.NaN},
-                                      'metadata_infos'       : Main.get_instrument_metadata_only(
+                                      'metadata_infos'       : RetrieveMatchingOBDC.get_instrument_metadata_only(
                                               _instrument_metadata)}
                         nbr_config = len(_dict_for_this_acquisition_time.keys())
                         _dict_for_this_acquisition_time['config{}'.format(nbr_config)] = _temp_dict
@@ -271,7 +271,7 @@ class Main:
                                                             'after' : np.NaN},
                                   'time_range_s'         : {'before': np.NaN,
                                                             'after' : np.NaN},
-                                  'metadata_infos'       : Main.get_instrument_metadata_only(
+                                  'metadata_infos'       : RetrieveMatchingOBDC.get_instrument_metadata_only(
                                           _instrument_metadata)}
                     final_full_master_dict[_acquisition_time] = {}
                     final_full_master_dict[_acquisition_time]['config0'] = _temp_dict
