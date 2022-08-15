@@ -15,7 +15,7 @@ import logging
 from ipywidgets import widgets
 from IPython.core.display import display, HTML
 
-from code.master_metadata_handler import MetadataHandler
+from samffr.master_metadata_handler import MetadataHandler
 
 
 def force_file_extension(filename, ext='.txt'):

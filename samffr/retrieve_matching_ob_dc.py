@@ -1,6 +1,6 @@
 import os
-from code.file_handler import get_list_of_all_files_in_subfolders
-from code.metadata_handler import MetadataHandler
+from samffr.file_handler import get_list_of_all_files_in_subfolders
+from samffr.metadata_handler import MetadataHandler
 from enum import Enum
 import numpy as np
 import collections

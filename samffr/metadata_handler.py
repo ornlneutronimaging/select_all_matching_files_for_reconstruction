@@ -9,9 +9,9 @@ from ipywidgets import widgets
 import datetime
 from collections import OrderedDict
 
-from code import file_handler
-from code.dictionary import combine_dictionaries
-from code.master_metadata_handler import MetadataHandler as MasterMetadataHandler
+from samffr import file_handler
+from samffr.dictionary import combine_dictionaries
+from samffr.master_metadata_handler import MetadataHandler as MasterMetadataHandler
 
 
 class MetadataName(Enum):
