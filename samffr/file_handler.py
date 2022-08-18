@@ -357,16 +357,16 @@ def retrieve_time_stamp(list_images, label=""):
     else:
         raise ValueError
 
-    message = "Retrieving time stamp of {}".format(label) if label else "Retrieving time stamp"
-    box = widgets.HBox([widgets.Label(message,
-                                      layout=widgets.Layout(width='20%')),
-                        widgets.IntProgress(min=0,
-                                            max=len(list_images),
-                                            value=0,
-                                            layout=widgets.Layout(width='50%'))
-                        ])
-    progress_bar = box.children[1]
-    display(box)
+    # message = "Retrieving time stamp of {}".format(label) if label else "Retrieving time stamp"
+    # box = widgets.HBox([widgets.Label(message,
+    #                                   layout=widgets.Layout(width='20%')),
+    #                     widgets.IntProgress(min=0,
+    #                                         max=len(list_images),
+    #                                         value=0,
+    #                                         layout=widgets.Layout(width='50%'))
+    #                     ])
+    # progress_bar = box.children[1]
+    # display(box)
 
     list_time_stamp = []
     list_time_stamp_user_format = []
@@ -377,9 +377,9 @@ def retrieve_time_stamp(list_images, label=""):
 
         _user_format = convert_to_human_readable_format(_time_stamp)
         list_time_stamp_user_format.append(_user_format)
-        progress_bar.value = _index + 1
-
-    box.close()
+    #     progress_bar.value = _index + 1
+    #
+    # box.close()
 
     return {'list_images': list_images,
             'list_time_stamp': list_time_stamp,
@@ -590,6 +590,7 @@ def read_bragg_edge_fitting_ascii_format(full_file_name):
 
     pd_data = pd.read_csv(full_file_name, skiprows=line_number, header=0, names=col_label)
     return {'data': pd_data, 'metadata': metadata}
+
 
 class ListMostDominantExtension(object):
     Result = namedtuple('Result', ('list_files', 'ext', 'uniqueness'))
