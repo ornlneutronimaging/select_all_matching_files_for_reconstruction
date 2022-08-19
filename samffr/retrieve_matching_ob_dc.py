@@ -39,9 +39,15 @@ METADATA_KEYS = {'ob' : [MetadataName.EXPOSURE_TIME,
 
 class RetrieveMatchingOBDC:
 
-    def __init__(self, list_sample_data=None, IPTS_folder=None):
+    def __init__(self, list_sample_data=None,
+                 IPTS_folder=None,
+                 maximum_number_of_files_to_use=None,
+                 maximum_time_offset=None):
+
         self.list_sample_data = list_sample_data
         self.IPTS_folder = IPTS_folder
+        self.maximum_number_of_files_to_use = maximum_number_of_files_to_use
+        self.maximum_time_offset = maximum_time_offset
 
     def run(self):
         self.retrieve_sample_metadata()
@@ -52,7 +58,14 @@ class RetrieveMatchingOBDC:
         self.match_dc()
 
     def get_matching_ob(self):
-        return self.get_matching_data_file(data_type='ob')
+        list_ob = self.get_matching_data_file(data_type='ob')
+
+        # return only the number of ob requested
+        if self.maximum_number_of_files_to_use:
+            if self.maximum_number_of_files_to_use < len(list_ob):
+                return list_ob[:self.maximum_number_of_files_to_use]
+
+        return list_ob
 
     def get_matching_dc(self):
         return self.get_matching_data_file(data_type='dc')
@@ -91,6 +104,14 @@ class RetrieveMatchingOBDC:
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
+        print(list_ob_dict)
+
+        if self.maximum_time_offset:
+            # retrieve time of first_sample
+            # retrieve time of last_sample
+            time_first_sample = 0
+            time_last_sample = 0
+
         for _index_ob in list_ob_dict.keys():
             _all_ob_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_ob_dict[_index_ob])
             _ob_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
@@ -100,7 +121,29 @@ class RetrieveMatchingOBDC:
                 for _config_id in final_full_master_dict[_acquisition_time].keys():
                     _sample_metadata_infos = final_full_master_dict[_acquisition_time][_config_id]['metadata_infos']
                     if RetrieveMatchingOBDC.all_metadata_match(_sample_metadata_infos, _ob_instrument_metadata):
-                        final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(list_ob_dict[_index_ob])
+
+                        if self.maximum_time_offset:
+                            # we only keep the OB that were acquired withing the time offset defined
+                            # get acquisition time of ob
+                            time_ob = 0
+                            if time_ob < time_first_sample:
+                                ref_time = time_first_sample
+                            else:
+                                ref_time = time_last_sample
+                            if (np.abs(time_ob - ref_time))/60.0 < self.maximum_time_offset:
+                                # keep_it
+                                final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(
+                                    list_ob_dict[_index_ob])
+
+
+
+
+
+
+
+
+                        else:
+                            final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(list_ob_dict[_index_ob])
 
         self.final_full_master_dict = final_full_master_dict
 
