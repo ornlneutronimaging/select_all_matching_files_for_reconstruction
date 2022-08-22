@@ -42,12 +42,16 @@ class RetrieveMatchingOBDC:
     def __init__(self, list_sample_data=None,
                  IPTS_folder=None,
                  maximum_number_of_files_to_use=None,
-                 maximum_time_offset=None):
+                 maximum_time_offset_mn=None):
+
+        """
+        maximum_time_offset is in minutes
+        """
 
         self.list_sample_data = list_sample_data
         self.IPTS_folder = IPTS_folder
         self.maximum_number_of_files_to_use = maximum_number_of_files_to_use
-        self.maximum_time_offset = maximum_time_offset
+        self.maximum_time_offset_mn = maximum_time_offset_mn
 
     def run(self):
         self.retrieve_sample_metadata()
@@ -104,46 +108,47 @@ class RetrieveMatchingOBDC:
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
-        print(list_ob_dict)
-
-        if self.maximum_time_offset:
-            # retrieve time of first_sample
-            # retrieve time of last_sample
-            time_first_sample = 0
-            time_last_sample = 0
+        # if self.maximum_time_offset:
+        #     # retrieve time of first_sample
+        #     # retrieve time of last_sample
+        #     time_first_sample = 0
+        #     time_last_sample = 0
 
         for _index_ob in list_ob_dict.keys():
+            _ob_time_stamp = list_ob_dict[_index_ob]['time_stamp']
+            # print(f"time_stamp of this ob is: {_ob_time_stamp}")
             _all_ob_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_ob_dict[_index_ob])
             _ob_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
                     _all_ob_instrument_metadata)
             _acquisition_time = _all_ob_instrument_metadata[MetadataName.EXPOSURE_TIME.value]['value']
+
             if _acquisition_time in list_of_sample_acquisition:
                 for _config_id in final_full_master_dict[_acquisition_time].keys():
                     _sample_metadata_infos = final_full_master_dict[_acquisition_time][_config_id]['metadata_infos']
+
                     if RetrieveMatchingOBDC.all_metadata_match(_sample_metadata_infos, _ob_instrument_metadata):
 
-                        if self.maximum_time_offset:
+                        first_image_time_stamp = \
+                            final_full_master_dict[_acquisition_time][_config_id]['first_images']['sample']['time_stamp']
+
+                        last_image_time_stamp = \
+                            final_full_master_dict[_acquisition_time][_config_id]['last_images']['sample']['time_stamp']
+
+                        if self.maximum_time_offset_mn:
                             # we only keep the OB that were acquired withing the time offset defined
                             # get acquisition time of ob
-                            time_ob = 0
-                            if time_ob < time_first_sample:
-                                ref_time = time_first_sample
-                            else:
-                                ref_time = time_last_sample
-                            if (np.abs(time_ob - ref_time))/60.0 < self.maximum_time_offset:
-                                # keep_it
+
+                            offset_from_first_sample_mn = np.abs(_ob_time_stamp - first_image_time_stamp) / 60.0
+                            offset_from_last_sample_mn = np.abs(_ob_time_stamp - last_image_time_stamp) / 60.0
+
+                            if self.maximum_time_offset_mn >= np.min([offset_from_first_sample_mn,
+                                                                      offset_from_last_sample_mn]):
                                 final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(
                                     list_ob_dict[_index_ob])
 
-
-
-
-
-
-
-
                         else:
-                            final_full_master_dict[_acquisition_time][_config_id]['list_ob'].append(list_ob_dict[_index_ob])
+                            final_full_master_dict[_acquisition_time][_config_id]['list_ob'].\
+                                append(list_ob_dict[_index_ob])
 
         self.final_full_master_dict = final_full_master_dict
 
