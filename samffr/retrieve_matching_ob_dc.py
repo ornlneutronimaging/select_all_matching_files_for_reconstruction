@@ -108,15 +108,8 @@ class RetrieveMatchingOBDC:
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
-        # if self.maximum_time_offset:
-        #     # retrieve time of first_sample
-        #     # retrieve time of last_sample
-        #     time_first_sample = 0
-        #     time_last_sample = 0
-
         for _index_ob in list_ob_dict.keys():
             _ob_time_stamp = list_ob_dict[_index_ob]['time_stamp']
-            # print(f"time_stamp of this ob is: {_ob_time_stamp}")
             _all_ob_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_ob_dict[_index_ob])
             _ob_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
                     _all_ob_instrument_metadata)
