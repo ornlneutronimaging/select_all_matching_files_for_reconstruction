@@ -108,7 +108,11 @@ class RetrieveMatchingOBDC:
         final_full_master_dict = self.final_full_master_dict
         list_of_sample_acquisition = final_full_master_dict.keys()
 
+        ob_metadata_matching_status_dict = {}
+
         for _index_ob in list_ob_dict.keys():
+            _current_ob_file = list_ob_dict[_index_ob]['filename']
+
             _ob_time_stamp = list_ob_dict[_index_ob]['time_stamp']
             _all_ob_instrument_metadata = RetrieveMatchingOBDC.get_instrument_metadata_only(list_ob_dict[_index_ob])
             _ob_instrument_metadata = RetrieveMatchingOBDC.isolate_instrument_metadata(
@@ -142,6 +146,9 @@ class RetrieveMatchingOBDC:
                         else:
                             final_full_master_dict[_acquisition_time][_config_id]['list_ob'].\
                                 append(list_ob_dict[_index_ob])
+
+
+            # ob_metadata_matching_status_dict[_current_ob_file] = _ob_metadata_matching_status
 
         self.final_full_master_dict = final_full_master_dict
 
@@ -198,8 +205,8 @@ class RetrieveMatchingOBDC:
 
         for _key in list_key:
             try:
-                if np.abs(np.float(
-                        metadata_1[_key]['value']) - np.float(metadata_2[_key]['value'])) > METADATA_ERROR_ALLOWED:
+                if np.abs(float(
+                        metadata_1[_key]['value']) - float(metadata_2[_key]['value'])) > METADATA_ERROR_ALLOWED:
                     return False
             except ValueError:
                 if metadata_1[_key]['value'] != metadata_2[_key]['value']:
